@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Device Info & Orientation</title>
+</head>
+<body>
+  <h1> Hello Aka </h1>
+  <h2>Your device info:</h2>
+  <pre id="deviceInfo">Loading device info...</pre>
+
+  <h2>Your location:</h2>
+  <pre id="locationInfo">Loading location...</pre>
+
+  <h2>Your device orientation:</h2>
+  <pre id="orientationInfo">Waiting for orientation data...</pre>
+
+  <script>
+    // Show basic device info
+    const deviceInfo = `
+User Agent: ${navigator.userAgent}
+Platform: ${navigator.platform}
+Language: ${navigator.language}
+Online: ${navigator.onLine}
+Screen resolution: ${window.screen.width} x ${window.screen.height}
+Pixel ratio: ${window.devicePixelRatio}
+    `;
+    document.getElementById('deviceInfo').textContent = deviceInfo;
+
+    // Get geolocation
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const coords = pos.coords;
+          document.getElementById('locationInfo').textContent =
+            `Latitude: ${coords.latitude}\nLongitude: ${coords.longitude}\nAccuracy: ±${coords.accuracy} meters`;
+        },
+        (error) => {
+          document.getElementById('locationInfo').textContent = `Location error: ${error.message}`;
+        }
+      );
+    } else {
+      document.getElementById('locationInfo').textContent = 'Geolocation not supported by this browser.';
+    }
+
+    // Listen for device orientation events (compass/gyroscope)
+    if (window.DeviceOrientationEvent) {
+      window.addEventListener('deviceorientation', (event) => {
+        // alpha = compass direction (0 to 360 degrees)
+        // beta = front-to-back tilt (-180 to 180 degrees)
+        // gamma = left-to-right tilt (-90 to 90 degrees)
+        const alpha = event.alpha?.toFixed(2) ?? 'N/A';
+        const beta = event.beta?.toFixed(2) ?? 'N/A';
+        const gamma = event.gamma?.toFixed(2) ?? 'N/A';
+
+        document.getElementById('orientationInfo').textContent =
+          `Alpha (compass): ${alpha}°\nBeta (front-back tilt): ${beta}°\nGamma (left-right tilt): ${gamma}°`;
+      }, true);
+    } else {
+      document.getElementById('orientationInfo').textContent = 'Device orientation not supported by this browser.';
+    }
+  </script>
+</body>
+</html>
