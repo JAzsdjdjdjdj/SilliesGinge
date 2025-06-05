@@ -1,62 +1,97 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Device Info & Orientation</title>
+  <title>Full Device Info</title>
 </head>
 <body>
-  <h1> Hello Aka </h1>
+  <h1>Hello Aka</h1>
+
   <h2>Your device info:</h2>
   <pre id="deviceInfo">Loading device info...</pre>
 
-  <h2>Your location:</h2>
+  <h2>Battery status:</h2>
+  <pre id="batteryInfo">Loading battery info...</pre>
+
+  <h2>Network info:</h2>
+  <pre id="networkInfo">Loading network info...</pre>
+
+  <h2>Location:</h2>
   <pre id="locationInfo">Loading location...</pre>
 
-  <h2>Your device orientation:</h2>
+  <h2>Orientation:</h2>
   <pre id="orientationInfo">Waiting for orientation data...</pre>
 
   <script>
-    // Show basic device info
-    const deviceInfo = `
+    // Basic device info
+    let deviceText = `
 User Agent: ${navigator.userAgent}
 Platform: ${navigator.platform}
 Language: ${navigator.language}
 Online: ${navigator.onLine}
-Screen resolution: ${window.screen.width} x ${window.screen.height}
-Pixel ratio: ${window.devicePixelRatio}
+Screen: ${screen.width} x ${screen.height}
+Pixel Ratio: ${window.devicePixelRatio}
+Memory: ${navigator.deviceMemory ?? 'N/A'} GB
     `;
-    document.getElementById('deviceInfo').textContent = deviceInfo;
+    document.getElementById('deviceInfo').textContent = deviceText;
 
-    // Get geolocation
+    // Battery info
+    if ('getBattery' in navigator) {
+      navigator.getBattery().then(battery => {
+        const batteryText = `
+Battery Level: ${(battery.level * 100).toFixed(0)}%
+Charging: ${battery.charging}
+        `;
+        document.getElementById('batteryInfo').textContent = batteryText;
+      }).catch(() => {
+        document.getElementById('batteryInfo').textContent = 'Battery info not available.';
+      });
+    } else {
+      document.getElementById('batteryInfo').textContent = 'Battery API not supported.';
+    }
+
+    // Network info
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (connection) {
+      const netText = `
+Type: ${connection.type || 'N/A'}
+Effective Type: ${connection.effectiveType || 'N/A'}
+Downlink: ${connection.downlink || 'N/A'} Mbps
+RTT: ${connection.rtt || 'N/A'} ms
+Save Data: ${connection.saveData}
+      `;
+      document.getElementById('networkInfo').textContent = netText;
+    } else {
+      document.getElementById('networkInfo').textContent = 'Network info not available.';
+    }
+
+    // Location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
+        pos => {
           const coords = pos.coords;
           document.getElementById('locationInfo').textContent =
             `Latitude: ${coords.latitude}\nLongitude: ${coords.longitude}\nAccuracy: ±${coords.accuracy} meters`;
         },
-        (error) => {
-          document.getElementById('locationInfo').textContent = `Location error: ${error.message}`;
+        err => {
+          document.getElementById('locationInfo').textContent = `Location error: ${err.message}`;
         }
       );
     } else {
-      document.getElementById('locationInfo').textContent = 'Geolocation not supported by this browser.';
+      document.getElementById('locationInfo').textContent = 'Geolocation not supported.';
     }
 
-    // Listen for device orientation events (compass/gyroscope)
+    // Orientation
     if (window.DeviceOrientationEvent) {
-      window.addEventListener('deviceorientation', (event) => {
-        // alpha = compass direction (0 to 360 degrees)
-        // beta = front-to-back tilt (-180 to 180 degrees)
-        // gamma = left-to-right tilt (-90 to 90 degrees)
+      window.addEventListener('deviceorientation', event => {
         const alpha = event.alpha?.toFixed(2) ?? 'N/A';
         const beta = event.beta?.toFixed(2) ?? 'N/A';
         const gamma = event.gamma?.toFixed(2) ?? 'N/A';
 
         document.getElementById('orientationInfo').textContent =
-          `Alpha (compass): ${alpha}°\nBeta (front-back tilt): ${beta}°\nGamma (left-right tilt): ${gamma}°`;
+          `Alpha (compass): ${alpha}°\nBeta (front-back): ${beta}°\nGamma (left-right): ${gamma}°`;
       }, true);
     } else {
-      document.getElementById('orientationInfo').textContent = 'Device orientation not supported by this browser.';
+      document.getElementById('orientationInfo').textContent = 'Device orientation not supported.';
     }
   </script>
 </body>
